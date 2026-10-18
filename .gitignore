@@ -20,3 +20,8 @@ investigation/main_ui.js
 # OS files
 .DS_Store
 Thumbs.db
+
+# Logs
+logs/
+*.log
+
