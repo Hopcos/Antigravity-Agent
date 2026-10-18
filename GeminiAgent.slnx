@@ -2,8 +2,14 @@
   <Folder Name="/src/">
     <Project Path="src/GeminiAgent/GeminiAgent.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <File Path="tests/GeminiAgent.Tests/GeminiAgent.Tests.csproj" />
+  </Folder>
   <Folder Name="/解决方案项/">
+    <File Path=".env.example" />
+    <File Path=".gitignore" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
     <File Path="README.md" />
   </Folder>
 </Solution>
