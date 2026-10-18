@@ -95,10 +95,14 @@ curl http://127.0.0.1:5055/v1/health
 
 ---
 
-### 一键执行全量闭环验证
-运行自动化测试套件，自动覆盖健康检查、24 模型枚举、非流式问答、流式 SSE、多轮工具调用及官方 Python SDK 验证：
+### 一键执行全量闭环验证（100% 纯 .NET 10 测试套件）
+项目包含完整的纯 **.NET 10 xUnit** 测试项目（[`tests/GeminiAgent.Tests`](file:///e:/Personal/GeminiAgent/tests/GeminiAgent.Tests)），直接引用微软与 OpenAI 官方发布的 `OpenAI` 官方 .NET NuGet 包，覆盖单元测试与端到端集成测试（健康检查、24 模型列举、非流式问答、实时流式 SSE、多轮工具调用与官方 SDK）：
 ```powershell
+# 方式 1：执行自动化闭环验证脚本
 .\scripts\verify_all.ps1
+
+# 方式 2：使用 dotnet CLI 运行所有测试
+dotnet test tests\GeminiAgent.Tests\GeminiAgent.Tests.csproj --no-build
 ```
 
 ---
@@ -166,7 +170,35 @@ GeminiAgent 100% 遵照 OpenAI 官方 API 协议规范，所有支持自定义 O
 
 ---
 
-### 5. 官方 Python OpenAI SDK
+### 5. 官方 .NET C# OpenAI SDK (NuGet: OpenAI 2.x)
+```csharp
+using OpenAI;
+using OpenAI.Chat;
+using System.ClientModel;
+
+// 1. 初始化官方客户端指向网关
+var clientOptions = new OpenAIClientOptions { Endpoint = new Uri("http://127.0.0.1:5055/v1") };
+var client = new OpenAIClient(new ApiKeyCredential("sk-antigravity"), clientOptions);
+var chatClient = client.GetChatClient("gemini-3.8-flash-high");
+
+// 2. 问答请求
+ChatCompletion completion = await chatClient.CompleteChatAsync("9.11 和 9.9 谁更大？请给出简短理由。");
+Console.WriteLine(string.Concat(completion.Content.Select(c => c.Text)));
+
+// 3. 实时流式传输
+AsyncCollectionResult<StreamingChatCompletionUpdate> stream = chatClient.CompleteChatStreamingAsync("从 1 数到 5");
+await foreach (var update in stream)
+{
+    foreach (var part in update.ContentUpdate)
+    {
+        Console.Write(part.Text);
+    }
+}
+```
+
+---
+
+### 6. 官方 Python OpenAI SDK
 ```python
 from openai import OpenAI
 

@@ -5,6 +5,7 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+.vs/
 
 # Python artifacts
 __pycache__/

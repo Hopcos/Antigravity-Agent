@@ -5,47 +5,45 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "   Running GeminiAgent Verification Suite                " -ForegroundColor Green
+Write-Host "   Running GeminiAgent .NET 10 Verification Suite        " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "Target Base URL: $BaseUrl" -ForegroundColor Gray
 
-# 1. Check Gateway Health
+# Step 1: Check Gateway Health Endpoint
 $healthUrl = "$BaseUrl/health"
-Write-Host "`n[Step 1/3] Checking Gateway Health Endpoint ($healthUrl)..." -ForegroundColor Yellow
+Write-Host "`n[Step 1/2] Checking Gateway Health Endpoint ($healthUrl)..." -ForegroundColor Yellow
 try {
     $healthResp = Invoke-RestMethod -Uri $healthUrl -Method Get -TimeoutSec 5
     Write-Host "Gateway status: $($healthResp.status)" -ForegroundColor Green
-    Write-Host "Active account: $($healthResp.account)" -ForegroundColor Green
-    Write-Host "Token source:   $($healthResp.token_source)" -ForegroundColor Green
-    Write-Host "Token expires:  $($healthResp.token_expires_at)" -ForegroundColor Green
-    Write-Host "Models count:   $($healthResp.models.Count)" -ForegroundColor Green
+    Write-Host "Active account: $($healthResp.account.email)" -ForegroundColor Green
+    Write-Host "Token source:   $($healthResp.account.source)" -ForegroundColor Green
+    Write-Host "Token expires:  $($healthResp.account.expiresUtc)" -ForegroundColor Green
+    Write-Host "Remaining secs: $($healthResp.account.remainingSeconds)s" -ForegroundColor Green
+    Write-Host "Active models:  $($healthResp.allModels.Count)" -ForegroundColor Green
 } catch {
     Write-Error "Failed to connect to gateway at $healthUrl. Is GeminiAgent running?"
     exit 1
 }
 
-# 2. Run Comprehensive Functional Test (HTTP SSE + Non-streaming + Tools)
-Write-Host "`n[Step 2/3] Running tests\test_gateway_openai.py..." -ForegroundColor Yellow
-$py = Get-Command python -ErrorAction SilentlyContinue
-if (-not $py) {
-    Write-Error "python is not found in PATH."
-    exit 1
-}
+# Step 2: Run .NET 10 xUnit Test Project
+Write-Host "`n[Step 2/2] Running .NET 10 Test Project (GeminiAgent.Tests)..." -ForegroundColor Yellow
 
-& python (Join-Path $PSScriptRoot "..\tests\test_gateway_openai.py")
+$testProj = (Resolve-Path (Join-Path $PSScriptRoot "..\tests\GeminiAgent.Tests\GeminiAgent.Tests.csproj")).Path
+
+Write-Host "Compiling test suite with .NET 10 SDK..." -ForegroundColor Gray
+dotnet build "$testProj" --no-dependencies
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "test_gateway_openai.py failed with exit code $LASTEXITCODE"
+    Write-Error "Test project build failed with exit code $LASTEXITCODE"
     exit $LASTEXITCODE
 }
 
-# 3. Run Official OpenAI Python SDK Test
-Write-Host "`n[Step 3/3] Running tests\test_official_openai_sdk.py..." -ForegroundColor Yellow
-& python (Join-Path $PSScriptRoot "..\tests\test_official_openai_sdk.py")
+Write-Host "Executing xUnit test runner..." -ForegroundColor Gray
+dotnet test "$testProj" --no-build --logger "console;verbosity=normal"
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "test_official_openai_sdk.py failed with exit code $LASTEXITCODE"
+    Write-Error "Test execution failed with exit code $LASTEXITCODE"
     exit $LASTEXITCODE
 }
 
 Write-Host "`n==========================================================" -ForegroundColor Green
-Write-Host "   ALL TESTS PASSED SUCCESSFULLY! (100% PASS RATE)       " -ForegroundColor Green
+Write-Host "   ALL .NET 10 TESTS PASSED SUCCESSFULLY! (100% PASS)    " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green

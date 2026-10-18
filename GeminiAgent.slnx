@@ -2,4 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/GeminiAgent/GeminiAgent.csproj" />
   </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/解决方案项/">
+    <File Path="README.md" />
+  </Folder>
 </Solution>
