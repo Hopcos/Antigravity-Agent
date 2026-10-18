@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/scripts/">
+    <File Path="scripts/start_background.ps1" />
+    <File Path="scripts/start_gateway.ps1" />
+    <File Path="scripts/stop_gateway.ps1" />
+    <File Path="scripts/verify_all.ps1" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/GeminiAgent/GeminiAgent.csproj" />
   </Folder>
