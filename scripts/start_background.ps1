@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 1. 检查是否已经在运行
+# 1. Check if port is already active
 $existing = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 if ($existing) {
     Write-Host "[!] GeminiAgent is ALREADY RUNNING on port $Port (PID: $($existing.OwningProcess))" -ForegroundColor Yellow
@@ -44,7 +44,7 @@ $proc = Start-Process -FilePath $exePath `
     -WindowStyle Hidden `
     -PassThru
 
-# 等待应用就绪（最多 10 秒）
+# Wait for health endpoint (up to 10 seconds)
 $healthUrl = "$url/v1/health"
 $ready = $false
 for ($i = 0; $i -lt 10; $i++) {
@@ -56,7 +56,7 @@ for ($i = 0; $i -lt 10; $i++) {
             break
         }
     } catch {
-        # 继续等待
+        # Keep waiting
     }
 }
 

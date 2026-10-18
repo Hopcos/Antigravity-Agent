@@ -10,7 +10,7 @@ Write-Host "==========================================================" -Foregro
 Write-Host "   Starting GeminiAgent (Antigravity OpenAI Gateway)      " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. 检查 dotnet 运行时
+# 1. Check dotnet CLI
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     Write-Error "dotnet CLI is not found in PATH. Please install .NET 8.0 or .NET 10.0 SDK."
     exit 1
@@ -19,11 +19,14 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 $dotnetVersion = dotnet --version
 Write-Host "[i] Detected .NET SDK version: $dotnetVersion" -ForegroundColor Gray
 
-# 2. 检查端口是否被占用
+# 2. Check if port is already in use
 $activePort = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 if ($activePort) {
     Write-Warning "Port $Port is already in use by PID $($activePort.OwningProcess)."
-    Write-Host "If GeminiAgent is already running, you can connect directly to http://$HostName`:$Port/v1" -ForegroundColor Yellow
+    Write-Host "[i] GeminiAgent is already running at http://$HostName`:$Port/v1" -ForegroundColor Green
+    Write-Host "[i] Health check: http://$HostName`:$Port/v1/health" -ForegroundColor Cyan
+    Write-Host "[i] To restart or stop it, run: .\stop_gateway.ps1 -Port $Port" -ForegroundColor Yellow
+    exit 0
 }
 
 $url = "http://$HostName`:$Port"
