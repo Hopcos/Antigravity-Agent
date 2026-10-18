@@ -1,0 +1,22 @@
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+venv/
+.env
+
+# Antigravity extracted reverse-engineering heavy artifacts
+investigation/main_ui.js
+
+# OS files
+.DS_Store
+Thumbs.db

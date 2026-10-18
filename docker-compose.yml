@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  gemini-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gemini-agent
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - GATEWAY_API_KEY=sk-antigravity
+      - GEMINI_DEFAULT_MODEL=gemini-3.8-flash-high
+      - ANTIGRAVITY_AUTH_SOURCE=Env
+      - ANTIGRAVITY_PROJECT=aicode-consumers
+      # 当在非宿主机 Docker 容器中运行时，可通过环境变量传入 refresh token:
+      # - ANTIGRAVITY_REFRESH_TOKEN=your_refresh_token_here
+      # - ANTIGRAVITY_CLIENT_ID=1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com
+      # - ANTIGRAVITY_CLIENT_SECRET=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
+    volumes:
+      # 可选：挂载主机上的凭据文件
+      - ~/.gemini:/root/.gemini:ro
