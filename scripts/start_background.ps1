@@ -13,43 +13,62 @@ if ($existing) {
     exit 0
 }
 
-$projectPath = (Resolve-Path (Join-Path $PSScriptRoot "..\src\GeminiAgent\GeminiAgent.csproj")).Path
+$slnPath = (Resolve-Path (Join-Path $PSScriptRoot "..\GeminiAgent.sln")).Path
+$binDir = (Resolve-Path (Join-Path $PSScriptRoot "..\src\GeminiAgent\bin\Debug\net10.0")).Path
+$exePath = Join-Path $binDir "GeminiAgent.exe"
+
+if (-not (Test-Path $exePath)) {
+    Write-Host "Building GeminiAgent.sln..." -ForegroundColor Gray
+    dotnet build "$slnPath" | Out-Null
+}
+
 $logDir = Join-Path $PSScriptRoot "..\logs"
 if (-not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
-$stdoutLog = Join-Path $logDir "gateway_stdout.log"
-$stderrLog = Join-Path $logDir "gateway_stderr.log"
+$stdoutLog = (Join-Path $logDir "gateway_stdout.log")
+$stderrLog = (Join-Path $logDir "gateway_stderr.log")
 
 $url = "http://$HostName`:$Port"
 
 Write-Host "Starting GeminiAgent in background..." -ForegroundColor Cyan
+Write-Host "Executable:    $exePath" -ForegroundColor Gray
 Write-Host "Listening URL: $url" -ForegroundColor Gray
 Write-Host "Log file:      $stdoutLog" -ForegroundColor Gray
 
-$psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName = "dotnet"
-$psi.Arguments = "run --project `"$projectPath`" --urls `"$url`""
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute = $false
-$psi.CreateNoWindow = $true
+$proc = Start-Process -FilePath $exePath `
+    -ArgumentList "--urls `"$url`"" `
+    -WorkingDirectory $binDir `
+    -RedirectStandardOutput $stdoutLog `
+    -RedirectStandardError $stderrLog `
+    -WindowStyle Hidden `
+    -PassThru
 
-$proc = New-Object System.Diagnostics.Process
-$proc.StartInfo = $psi
-$proc.Start() | Out-Null
-
-Start-Sleep -Seconds 3
-
-# 检查是否成功启动
+# 等待应用就绪（最多 10 秒）
 $healthUrl = "$url/v1/health"
-try {
-    $resp = Invoke-RestMethod -Uri $healthUrl -Method Get -TimeoutSec 5
+$ready = $false
+for ($i = 0; $i -lt 10; $i++) {
+    Start-Sleep -Seconds 1
+    try {
+        $resp = Invoke-RestMethod -Uri $healthUrl -Method Get -TimeoutSec 2
+        if ($resp.status -eq "healthy") {
+            $ready = $true
+            break
+        }
+    } catch {
+        # 继续等待
+    }
+}
+
+if ($ready) {
     Write-Host "`n[SUCCESS] GeminiAgent started successfully in background!" -ForegroundColor Green
     Write-Host "PID:            $($proc.Id)" -ForegroundColor Green
     Write-Host "Active Account: $($resp.account.email)" -ForegroundColor Green
     Write-Host "Token Status:   $($resp.account.remainingSeconds)s remaining (Auto perpetual renewal active)" -ForegroundColor Green
     Write-Host "OpenAI Base:    $url/v1" -ForegroundColor Green
-} catch {
-    Write-Warning "Gateway process started with PID $($proc.Id), but health endpoint did not respond immediately. Check $stderrLog"
+} else {
+    Write-Warning "Gateway process started with PID $($proc.Id), but health endpoint did not respond within 10s."
+    if (Test-Path $stderrLog) {
+        Get-Content $stderrLog -Tail 20 | Write-Warning
+    }
 }

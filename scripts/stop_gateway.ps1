@@ -22,7 +22,7 @@ foreach ($conn in $connections) {
             Write-Host "[SUCCESS] Stopped PID $procId" -ForegroundColor Green
         }
     } catch {
-        Write-Warning "Failed to stop process PID $procId: $_"
+        Write-Warning "Failed to stop process PID $($procId): $_"
     }
 }
 
