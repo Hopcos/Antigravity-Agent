@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/scripts/">
+    <File Path="scripts/start_background.ps1" />
+    <File Path="scripts/start_gateway.ps1" />
+    <File Path="scripts/stop_gateway.ps1" />
+    <File Path="scripts/verify_all.ps1" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AntigravityGateway/AntigravityGateway.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AntigravityGateway.Tests/AntigravityGateway.Tests.csproj" />
+  </Folder>
+  <Folder Name="/解决方案项/">
+    <File Path=".env.example" />
+    <File Path=".gitignore" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

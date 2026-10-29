@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  gemini-agent:
+  antigravity-gateway:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: gemini-agent
+    container_name: antigravity-gateway
     restart: unless-stopped
     ports:
       - "5055:5055"

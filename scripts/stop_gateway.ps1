@@ -4,11 +4,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "Searching for GeminiAgent process on port $Port..." -ForegroundColor Cyan
+Write-Host "Searching for AntigravityGateway process on port $Port..." -ForegroundColor Cyan
 
 $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 if (-not $connections) {
-    Write-Host "[i] No active GeminiAgent service found listening on port $Port." -ForegroundColor Yellow
+    Write-Host "[i] No active AntigravityGateway service found listening on port $Port." -ForegroundColor Yellow
     exit 0
 }
 
@@ -26,4 +26,4 @@ foreach ($conn in $connections) {
     }
 }
 
-Write-Host "GeminiAgent gateway has been stopped." -ForegroundColor Green
+Write-Host "AntigravityGateway has been stopped." -ForegroundColor Green

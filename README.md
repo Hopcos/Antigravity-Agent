@@ -1,8 +1,8 @@
-# GeminiAgent 🚀
+# AntigravityGateway 🚀
 
 > **基于 Antigravity 官方账号的 OpenAI 兼容代理网关与双 Token 永续系统**
 
-GeminiAgent 是一个专为 AI Agent（Cursor、Dify、LangChain、Cline / Roo Code、Continue 等）打造的高性能本地/私有网关。它通过深度逆向 Google 官方 Antigravity 插件运行环境，自动从 Windows 凭据管理器中无感提取当前登录账号的 OAuth 凭据，并将其转化为完全符合 **OpenAI 官方规范** 的 API 接口（`/v1/chat/completions`、`/v1/models`、`/v1/health`）。
+AntigravityGateway 是一个专为 AI Agent（Cursor、Dify、LangChain、Cline / Roo Code、Continue 等）打造的高性能本地/私有网关。它通过深度逆向 Google 官方 Antigravity 插件运行环境，自动从 Windows 凭据管理器中无感提取当前登录账号的 OAuth 凭据，并将其转化为完全符合 **OpenAI 官方规范** 的 API 接口（`/v1/chat/completions`、`/v1/models`、`/v1/health`）。
 
 ---
 
@@ -36,7 +36,7 @@ flowchart TD
 
 #### 🔑 Refresh Token 是如何获取的？（无感提取与多级探测）
 
-网关在启动与运行期间，**完全不需要用户手动抓包、提取 Cookie 或输入账号密码**，而是通过内置的安全凭据解析引擎（[`AntigravityAccountService.cs`](file:///e:/Personal/GeminiAgent/src/GeminiAgent/Services/AntigravityAccountService.cs)）从宿主系统中自动定位并解密提取。
+网关在启动与运行期间，**完全不需要用户手动抓包、提取 Cookie 或输入账号密码**，而是通过内置的安全凭据解析引擎（[`AntigravityAccountService.cs`](src/AntigravityGateway/Services/AntigravityAccountService.cs)）从宿主系统中自动定位并解密提取。
 
 ##### 1. 本地存储位置与写入者
 - 当用户在 Windows 系统中安装并登录 Google Antigravity 时，Antigravity 客户端会自动将 Google OAuth 2.0 授权凭据加密持久化保存在 **Windows 凭据管理器 (Windows Credential Manager)** 中；
@@ -81,11 +81,11 @@ flowchart TD
 
 ### 2. ⚡ Antigravity 专属通道与后端优化
 - **专用内部端点**：直连 Google 内部通道 `https://daily-cloudcode-pa.googleapis.com/v1internal`，指定 `aicode-consumers` 专属工程与 `antigravity/2.24.0` 客户端标识，避开常规 Cloud Code 订阅限制与 403 阻断。
-- **全双工流式与聚合**：由于上游限制仅开放 `:streamGenerateContent?alt=sse`，GeminiAgent 内部实现了高吞吐 SSE 解析器。当客户端请求 `stream=false` 时，网关在内存中以纳秒级高效聚合分块并输出标准 OpenAI 响应；当客户端请求 `stream=true` 时，零延迟透传 SSE 数据。
+- **全双工流式与聚合**：由于上游限制仅开放 `:streamGenerateContent?alt=sse`，AntigravityGateway 内部实现了高吞吐 SSE 解析器。当客户端请求 `stream=false` 时，网关在内存中以纳秒级高效聚合分块并输出标准 OpenAI 响应；当客户端请求 `stream=true` 时，零延迟透传 SSE 数据。
 
 ### 3. 🧠 Gemini 3.x 深度思考与多轮工具调用 (Thought Signature) 破局
 - **思考标记 (Thought Signature) 完美适配**：Gemini 3.x（如 `gemini-3.8-flash-high`）在 Tool Calling 中引入了思维链签名校验机制，下游在回传函数结果时若缺少该签名上游将直接报 400 错误。
-- **无状态 ID 编码创新**：GeminiAgent 将 `(tool_name, thoughtSignature)` 进行 Base64Url 打包编码进标准的 OpenAI `tool_call_id`（`call_<encoded>`）。标准 Agent 无需做任何魔改即可直接原样传回，网关无状态解码还原，彻底解决多轮函数调用的断流痛点。
+- **无状态 ID 编码创新**：AntigravityGateway 将 `(tool_name, thoughtSignature)` 进行 Base64Url 打包编码进标准的 OpenAI `tool_call_id`（`call_<encoded>`）。标准 Agent 无需做任何魔改即可直接原样传回，网关无状态解码还原，彻底解决多轮函数调用的断流痛点。
 - **思考 Token 统计**：将 Gemini 的 `thoughtsTokenCount` 转化为 OpenAI 规范的 `usage.completion_tokens_details.reasoning_tokens`，精准支持思考过程审计。
 
 ### 4. 🔀 丰富模型生态与实测性能
@@ -141,20 +141,20 @@ curl http://127.0.0.1:5055/v1/health
 ---
 
 ### 一键执行全量闭环验证（100% 纯 .NET 10 测试套件）
-项目包含完整的纯 **.NET 10 xUnit** 测试项目（[`tests/GeminiAgent.Tests`](file:///e:/Personal/GeminiAgent/tests/GeminiAgent.Tests)），直接引用微软与 OpenAI 官方发布的 `OpenAI` 官方 .NET NuGet 包，覆盖单元测试与端到端集成测试（健康检查、24 模型列举、非流式问答、实时流式 SSE、多轮工具调用与官方 SDK）：
+项目包含完整的纯 **.NET 10 xUnit** 测试项目（[`tests/AntigravityGateway.Tests`](tests/AntigravityGateway.Tests)），直接引用微软与 OpenAI 官方发布的 `OpenAI` 官方 .NET NuGet 包，覆盖单元测试与端到端集成测试（健康检查、24 模型列举、非流式问答、实时流式 SSE、多轮工具调用与官方 SDK）：
 ```powershell
 # 方式 1：执行自动化闭环验证脚本
 .\scripts\verify_all.ps1
 
 # 方式 2：使用 dotnet CLI 运行所有测试
-dotnet test tests\GeminiAgent.Tests\GeminiAgent.Tests.csproj --no-build
+dotnet test tests\AntigravityGateway.Tests\AntigravityGateway.Tests.csproj --no-build
 ```
 
 ---
 
 ## 💻 主流 Agent 与开发工具配置指南
 
-GeminiAgent 100% 遵照 OpenAI 官方 API 协议规范，所有支持自定义 OpenAI 接口的工具均可**免修改直接接入**。
+AntigravityGateway 100% 遵照 OpenAI 官方 API 协议规范，所有支持自定义 OpenAI 接口的工具均可**免修改直接接入**。
 
 ### 1. Cursor 配置
 1. 打开 Cursor：`Settings` -> `Features` -> `Models`；
@@ -295,7 +295,7 @@ print(response.content)
 
 ## ⚙️ 环境变量与高级配置
 
-配置文件位于 `src/GeminiAgent/appsettings.json`，可通过环境变量灵活覆盖：
+配置文件位于 `src/AntigravityGateway/appsettings.json`，可通过环境变量灵活覆盖：
 
 | 环境变量 | 默认值 | 说明 |
 | :--- | :--- | :--- |
@@ -315,7 +315,7 @@ docker compose up -d
 或直接通过环境变量启动：
 ```bash
 export ANTIGRAVITY_REFRESH_TOKEN="1//04xxxxxxxxxxxxxxxxxx"
-dotnet run --project src/GeminiAgent/GeminiAgent.csproj --urls "http://0.0.0.0:5055"
+dotnet run --project src/AntigravityGateway/AntigravityGateway.csproj --urls "http://0.0.0.0:5055"
 ```
 
 ---

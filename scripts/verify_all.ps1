@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "   Running GeminiAgent .NET 10 Verification Suite        " -ForegroundColor Green
+Write-Host "   Running AntigravityGateway .NET 10 Verification Suite  " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "Target Base URL: $BaseUrl" -ForegroundColor Gray
 
@@ -21,14 +21,14 @@ try {
     Write-Host "Remaining secs: $($healthResp.account.remainingSeconds)s" -ForegroundColor Green
     Write-Host "Active models:  $($healthResp.allModels.Count)" -ForegroundColor Green
 } catch {
-    Write-Error "Failed to connect to gateway at $healthUrl. Is GeminiAgent running?"
+    Write-Error "Failed to connect to gateway at $healthUrl. Is AntigravityGateway running?"
     exit 1
 }
 
 # Step 2: Run .NET 10 xUnit Test Project
-Write-Host "`n[Step 2/2] Running .NET 10 Test Project (GeminiAgent.Tests)..." -ForegroundColor Yellow
+Write-Host "`n[Step 2/2] Running .NET 10 Test Project (AntigravityGateway.Tests)..." -ForegroundColor Yellow
 
-$testProj = (Resolve-Path (Join-Path $PSScriptRoot "..\tests\GeminiAgent.Tests\GeminiAgent.Tests.csproj")).Path
+$testProj = (Resolve-Path (Join-Path $PSScriptRoot "..\tests\AntigravityGateway.Tests\AntigravityGateway.Tests.csproj")).Path
 
 Write-Host "Compiling test suite with .NET 10 SDK..." -ForegroundColor Gray
 dotnet build "$testProj" --no-dependencies

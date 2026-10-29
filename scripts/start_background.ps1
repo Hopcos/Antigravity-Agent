@@ -8,17 +8,17 @@ $ErrorActionPreference = "Stop"
 # 1. Check if port is already active
 $existing = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 if ($existing) {
-    Write-Host "[!] GeminiAgent is ALREADY RUNNING on port $Port (PID: $($existing.OwningProcess))" -ForegroundColor Yellow
+    Write-Host "[!] AntigravityGateway is ALREADY RUNNING on port $Port (PID: $($existing.OwningProcess))" -ForegroundColor Yellow
     Write-Host "    Health check: http://$HostName`:$Port/v1/health" -ForegroundColor Cyan
     exit 0
 }
 
-$slnPath = (Resolve-Path (Join-Path $PSScriptRoot "..\GeminiAgent.sln")).Path
-$binDir = (Resolve-Path (Join-Path $PSScriptRoot "..\src\GeminiAgent\bin\Debug\net10.0")).Path
-$exePath = Join-Path $binDir "GeminiAgent.exe"
+$slnPath = (Resolve-Path (Join-Path $PSScriptRoot "..\AntigravityGateway.sln")).Path
+$binDir = (Resolve-Path (Join-Path $PSScriptRoot "..\src\AntigravityGateway\bin\Debug\net10.0")).Path
+$exePath = Join-Path $binDir "AntigravityGateway.exe"
 
 if (-not (Test-Path $exePath)) {
-    Write-Host "Building GeminiAgent.sln..." -ForegroundColor Gray
+    Write-Host "Building AntigravityGateway.sln..." -ForegroundColor Gray
     dotnet build "$slnPath" | Out-Null
 }
 
@@ -31,7 +31,7 @@ $stderrLog = (Join-Path $logDir "gateway_stderr.log")
 
 $url = "http://$HostName`:$Port"
 
-Write-Host "Starting GeminiAgent in background..." -ForegroundColor Cyan
+Write-Host "Starting AntigravityGateway in background..." -ForegroundColor Cyan
 Write-Host "Executable:    $exePath" -ForegroundColor Gray
 Write-Host "Listening URL: $url" -ForegroundColor Gray
 Write-Host "Log file:      $stdoutLog" -ForegroundColor Gray
@@ -61,7 +61,7 @@ for ($i = 0; $i -lt 10; $i++) {
 }
 
 if ($ready) {
-    Write-Host "`n[SUCCESS] GeminiAgent started successfully in background!" -ForegroundColor Green
+    Write-Host "`n[SUCCESS] AntigravityGateway started successfully in background!" -ForegroundColor Green
     Write-Host "PID:            $($proc.Id)" -ForegroundColor Green
     Write-Host "Active Account: $($resp.account.email)" -ForegroundColor Green
     Write-Host "Token Status:   $($resp.account.remainingSeconds)s remaining (Auto perpetual renewal active)" -ForegroundColor Green

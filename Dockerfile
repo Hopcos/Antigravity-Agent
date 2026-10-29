@@ -4,12 +4,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY src/GeminiAgent/*.csproj src/GeminiAgent/
-RUN dotnet restore src/GeminiAgent/GeminiAgent.csproj
+COPY src/AntigravityGateway/*.csproj src/AntigravityGateway/
+RUN dotnet restore src/AntigravityGateway/AntigravityGateway.csproj
 
-COPY src/GeminiAgent/ src/GeminiAgent/
-WORKDIR /src/GeminiAgent
-RUN dotnet publish GeminiAgent.csproj -c Release -o /app/publish /p:UseAppHost=false
+COPY src/AntigravityGateway/ src/AntigravityGateway/
+WORKDIR /src/AntigravityGateway
+RUN dotnet publish AntigravityGateway.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # ==============================================================
 # Runtime Stage
@@ -23,4 +23,4 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "GeminiAgent.dll"]
+ENTRYPOINT ["dotnet", "AntigravityGateway.dll"]

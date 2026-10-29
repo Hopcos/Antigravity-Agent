@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "   Starting GeminiAgent (Antigravity OpenAI Gateway)      " -ForegroundColor Green
+Write-Host "   Starting AntigravityGateway (OpenAI API Gateway)       " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Check dotnet CLI
@@ -23,7 +23,7 @@ Write-Host "[i] Detected .NET SDK version: $dotnetVersion" -ForegroundColor Gray
 $activePort = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 if ($activePort) {
     Write-Warning "Port $Port is already in use by PID $($activePort.OwningProcess)."
-    Write-Host "[i] GeminiAgent is already running at http://$HostName`:$Port/v1" -ForegroundColor Green
+    Write-Host "[i] AntigravityGateway is already running at http://$HostName`:$Port/v1" -ForegroundColor Green
     Write-Host "[i] Health check: http://$HostName`:$Port/v1/health" -ForegroundColor Cyan
     Write-Host "[i] To restart or stop it, run: .\stop_gateway.ps1 -Port $Port" -ForegroundColor Yellow
     exit 0
@@ -39,5 +39,5 @@ if (-not [string]::IsNullOrWhiteSpace($ApiKey)) {
     Write-Host "[*] API Key protection enabled: $ApiKey" -ForegroundColor Magenta
 }
 
-$projectPath = Join-Path $PSScriptRoot "..\src\GeminiAgent\GeminiAgent.csproj"
+$projectPath = Join-Path $PSScriptRoot "..\src\AntigravityGateway\AntigravityGateway.csproj"
 dotnet run --project "$projectPath" --urls "$url"
