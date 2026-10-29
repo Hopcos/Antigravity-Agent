@@ -34,6 +34,51 @@ flowchart TD
     end
 ```
 
+#### 🔑 Refresh Token 是如何获取的？（无感提取与多级探测）
+
+网关在启动与运行期间，**完全不需要用户手动抓包、提取 Cookie 或输入账号密码**，而是通过内置的安全凭据解析引擎（[`AntigravityAccountService.cs`](file:///e:/Personal/GeminiAgent/src/GeminiAgent/Services/AntigravityAccountService.cs)）从宿主系统中自动定位并解密提取。
+
+##### 1. 本地存储位置与写入者
+- 当用户在 Windows 系统中安装并登录 Google Antigravity 时，Antigravity 客户端会自动将 Google OAuth 2.0 授权凭据加密持久化保存在 **Windows 凭据管理器 (Windows Credential Manager)** 中；
+- 目标凭据名称（Target Name）为：**`gemini:antigravity`**（凭据类型：`Generic Credential` 普通凭据）。
+
+##### 2. Win32 P/Invoke 安全读取与解密
+网关通过 P/Invoke 直接调用 Windows 核心底层动态库 `Advapi32.dll`：
+```csharp
+[DllImport("Advapi32.dll", EntryPoint = "CredReadW", CharSet = CharSet.Unicode, SetLastError = true)]
+private static extern bool CredRead(string target, int type, int reservedFlag, out IntPtr credentialPtr);
+```
+- **免输密码与 DPAPI 安全保护**：调用 `CredReadW("gemini:antigravity", 1, ...)` 时，Windows 操作系统会自动利用当前登录用户的 DPAPI 密钥解密凭据二进制数据（`CredentialBlob`），全程静默在内存中完成，无需用户输入密码或产生任何系统弹窗。
+- **凭据结构解析**：Blob 解密后是一个 JSON 结构，网关提取其中的核心字段：
+  - `refresh_token`：长期有效的 Google OAuth 刷新令牌（形如 `1//04...`）；
+  - `id_token`：网关通过 Base64 解码 JWT Payload 提取出当前绑定的 Google 邮箱（例如 `pingcunhe@gmail.com`）；
+  - `access_token` 与初始过期时间。
+
+##### 3. 多级凭据获取优先级（支持跨平台部署）
+为了兼顾本地开箱即用与服务器/Docker 部署，网关实现了 4 级降级解析机制：
+
+```mermaid
+flowchart TD
+    A["凭据探测入口 ResolveCredentials()"] --> B{"1. 环境变量 ANTIGRAVITY_REFRESH_TOKEN?"}
+    B -- 已配置 --> C["使用环境变量中的 Refresh Token (适用 Linux/Docker)"]
+    B -- 未配置 --> D{"2. 处于 Windows 系统?"}
+    D -- 是 --> E["P/Invoke 调用 CredReadW 读取 Windows 凭据管理器 [gemini:antigravity]"]
+    E --> F{"读取成功并包含 refresh_token?"}
+    F -- 是 --> G["成功解析并绑定当前 Windows 登录账号 (本地推荐)"]
+    F -- 否 --> H{"3. 探测本地文件 ~/.gemini/oauth_creds.json?"}
+    D -- 否 --> H
+    H -- 存在 --> I["从 JSON 文件读取 refresh_token"]
+    H -- 不存在 --> J{"4. 探测 Google gcloud ADC 凭据文件?"}
+    J -- 存在 --> K["从 application_default_credentials.json 读取"]
+    J -- 不存在 --> L["抛出 TokenRefreshException 提示凭据未找到"]
+```
+
+##### 4. 换取 Access Token 与主动永续
+提取到 `refresh_token` 后，网关使用 Antigravity 官方客户端标识（`client_id` 与 `client_secret`）定期请求 Google 认证端点：
+- **OAuth 端点**：`https://oauth2.googleapis.com/token`
+- **获取权限**：自动获取包含 `https://www.googleapis.com/auth/aicode` 核心权限的全新 `access_token`；
+- **后台保活**：`TokenRefresherBackgroundService` 每 60 秒轮询，在有效时长不足 300 秒时提前在后台静默刷新，确保外部 Agent（Cursor、Dify、LangChain 等）的长期请求永远不会因 Token 过期而中断。
+
 ### 2. ⚡ Antigravity 专属通道与后端优化
 - **专用内部端点**：直连 Google 内部通道 `https://daily-cloudcode-pa.googleapis.com/v1internal`，指定 `aicode-consumers` 专属工程与 `antigravity/2.24.0` 客户端标识，避开常规 Cloud Code 订阅限制与 403 阻断。
 - **全双工流式与聚合**：由于上游限制仅开放 `:streamGenerateContent?alt=sse`，GeminiAgent 内部实现了高吞吐 SSE 解析器。当客户端请求 `stream=false` 时，网关在内存中以纳秒级高效聚合分块并输出标准 OpenAI 响应；当客户端请求 `stream=true` 时，零延迟透传 SSE 数据。
